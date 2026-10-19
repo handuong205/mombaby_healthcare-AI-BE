@@ -160,6 +160,3 @@ Hệ thống cung cấp sẵn file mẫu [`.env.example`](.env.example) và file
 <div align="center">
   <i>Được phát triển với ❤️ cho dự án Capstone Y tế thông minh.</i>
 </div>
-#   m o m b a b y _ h e a l t h c a r e - A I - B E  
- #   m o m b a b y _ h e a l t h c a r e - A I - B E  
- 
