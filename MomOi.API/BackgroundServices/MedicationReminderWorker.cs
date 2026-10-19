@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MomOi.API.Data;
+using MomOi.API.Helpers;
 using MomOi.API.Models;
 using MomOi.API.Models.Health;
 using MomOi.API.Services.Integration;
@@ -52,13 +53,16 @@ namespace MomOi.API.BackgroundServices
             var pushService = scope.ServiceProvider.GetRequiredService<IPushNotificationService>();
 
             var now = DateTime.UtcNow;
-            var timeNow = now.ToString("HH:mm"); // matching exactly HH:mm
-            var todayStr = now.Date;
+            // Giờ nhắc được lưu theo giờ VN ("07:00"), nên phải so với giờ VN chứ không phải UTC.
+            var timeNow = VietnamTime.Now.ToString("HH:mm"); // matching exactly HH:mm
+            // Ngày lịch theo giờ VN (00:00 UTC của ngày đó), cùng quy ước với ngày trong adherence log.
+            var todayStr = VietnamTime.Today;
+            var tomorrow = todayStr.AddDays(1);
 
-            // Fetch active schedules
+            // Fetch active schedules: bắt đầu từ hôm nay trở về trước, kết thúc sau hôm nay.
             var activeSchedules = await dbContext.MedicationSchedules
                 .Include(m => m.AdherenceLogs)
-                .Where(m => m.StartDate <= now && m.EndDate >= now)
+                .Where(m => m.StartDate < tomorrow && m.EndDate > todayStr)
                 .ToListAsync(stoppingToken);
 
             foreach (var schedule in activeSchedules)
