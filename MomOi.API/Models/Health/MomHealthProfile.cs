@@ -1,0 +1,106 @@
+using MomOi.API.Models.Identity;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace MomOi.API.Models.Health
+{
+    /// <summary>
+    /// Stages in the maternal journey.
+    /// </summary>
+    public enum JourneyStage
+    {
+        PrePregnancy,
+        Pregnant,
+        Postpartum
+    }
+
+    /// <summary>
+    /// Stores health metrics only. Separated from user PII tables (Decree 13/2023/ND-CP compliance).
+    /// </summary>
+    public class MomHealthProfile : BaseEntity
+    {
+        /// <summary>
+        /// Foreign key reference to AppUser.
+        /// </summary>
+        public string UserId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Navigation property to AppUser.
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        public AppUser? User { get; set; }
+
+        /// <summary>
+        /// Current stage of journey (PrePregnancy, Pregnant, Postpartum).
+        /// </summary>
+        public JourneyStage Stage { get; set; } = JourneyStage.PrePregnancy;
+
+        /// <summary>
+        /// Current week of pregnancy, if applicable.
+        /// </summary>
+        public int? PregnancyWeek { get; set; }
+
+        /// <summary>
+        /// Body Mass Index (BMI).
+        /// </summary>
+        public float? Bmi { get; set; }
+
+        /// <summary>
+        /// Height of the mother in cm.
+        /// </summary>
+        [Range(50, 250, ErrorMessage = "Chiều cao phải trong khoảng 50-250 cm.")]
+        public float? Height { get; set; }
+
+        /// <summary>
+        /// Weight of the mother in kg.
+        /// </summary>
+        [Range(20, 300, ErrorMessage = "Cân nặng phải trong khoảng 20-300 kg.")]
+        public float? Weight { get; set; }
+
+        /// <summary>
+        /// Blood glucose level (mmol/L or mg/dL).
+        /// </summary>
+        public float? BloodSugarLevel { get; set; }
+
+        /// <summary>
+        /// Indicates if the mother has gestational diabetes.
+        /// </summary>
+        public bool HasGestDiabetes { get; set; }
+
+        /// <summary>
+        /// Medical conditions, serialized as a JSON string array in DB.
+        /// </summary>
+        public string[]? MedicalConditions { get; set; }
+
+        /// <summary>
+        /// Average cycle length in days, if tracking fertility.
+        /// </summary>
+        public int? AvgCycleLength { get; set; }
+
+        /// <summary>
+        /// Start date of the last menstrual period.
+        /// </summary>
+        public DateTime? LastPeriodDate { get; set; }
+
+        /// <summary>
+        /// Delivery date of the child.
+        /// </summary>
+        public DateTime? DeliveryDate { get; set; }
+
+        /// <summary>
+        /// Indicates if the mother is currently breastfeeding.
+        /// </summary>
+        public bool IsBreastfeeding { get; set; }
+
+        /// <summary>
+        /// Navigation collection for menstrual cycle logs.
+        /// </summary>
+        public ICollection<CycleLog> CycleLogs { get; set; } = new List<CycleLog>();
+
+        /// <summary>
+        /// Navigation collection for Edinburgh Postnatal Depression Scale assessments.
+        /// </summary>
+        public ICollection<EpdsAssessment> EpdsAssessments { get; set; } = new List<EpdsAssessment>();
+    }
+}

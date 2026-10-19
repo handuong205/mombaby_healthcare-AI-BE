@@ -1,0 +1,64 @@
+services:
+  pgdb:             # PostgreSQL database (dùng chung cho cả C# API và Python API)
+    image: postgres:15-alpine
+    container_name: momoi-postgres
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres123}
+      - POSTGRES_DB=momoidb
+    volumes:
+      - pgdb_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d momoidb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  nutrition-api:    # Python FastAPI (USDA & WHO Nutrition Engine)
+    container_name: momoi-nutrition-api
+    build:
+      context: ./MomOi.NutritionAPI
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - USDA_API_KEY=${USDA_API_KEY:-DEMO_KEY}
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres123}@pgdb:5432/momoidb
+    depends_on:
+      pgdb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/health')\" || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  momoi-api:        # ASP.NET Core 8 backend
+    container_name: momoi-backend-api
+    build:
+      context: .
+      dockerfile: MomOi.API/Dockerfile
+    ports:
+      - "8000:80"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=pgdb;Port=5432;Database=momoidb;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres123};
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - UsdaApiKey=${USDA_API_KEY:-DEMO_KEY}
+      - NutritionApiUrl=http://nutrition-api:8001
+      - RunMigrationsOnStartup=true
+      - EnableSwagger=true
+    depends_on:
+      pgdb:
+        condition: service_healthy
+      nutrition-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdb_data:

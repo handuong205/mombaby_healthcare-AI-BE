@@ -1,0 +1,16 @@
+**/.git
+**/.github
+**/.vs
+**/.vscode
+**/.idea
+**/bin/
+**/obj/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache/
+**/nutrition.db
+**/test_out.txt
+*.md
+scripts/
