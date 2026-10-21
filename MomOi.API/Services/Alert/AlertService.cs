@@ -94,11 +94,12 @@ namespace MomOi.API.Services.Alert
             return ApiResponse<object>.SuccessResult(null!, "Xóa cảnh báo thành công.");
         }
 
-        public async Task<ApiResponse<object>> ResolveAlertAsync(string id)
+        public async Task<ApiResponse<object>> ResolveAlertAsync(string id, string? ownerUserId = null)
         {
             // 1. Resolve CriticalAlertLogs
             var criticals = await _unitOfWork.Repository<CriticalAlertLog>()
-                .FindAsync(c => !c.IsResolved && (c.UserId == id || c.Id.ToString() == id));
+                .FindAsync(c => !c.IsResolved && (c.UserId == id || c.Id.ToString() == id)
+                    && (ownerUserId == null || c.UserId == ownerUserId));
             foreach (var c in criticals)
             {
                 c.IsResolved = true;
@@ -106,7 +107,8 @@ namespace MomOi.API.Services.Alert
 
             // 2. Resolve LifestyleAlerts
             var lifestyleAlerts = await _unitOfWork.Repository<LifestyleAlert>()
-                .FindAsync(l => l.Status == AlertStatus.Pending && (l.UserId == id || l.Id.ToString() == id));
+                .FindAsync(l => l.Status == AlertStatus.Pending && (l.UserId == id || l.Id.ToString() == id)
+                    && (ownerUserId == null || l.UserId == ownerUserId));
             foreach (var l in lifestyleAlerts)
             {
                 l.Status = AlertStatus.Resolved;
@@ -114,7 +116,8 @@ namespace MomOi.API.Services.Alert
 
             // 3. Resolve NotificationAlerts
             var notificationAlerts = await _unitOfWork.Repository<NotificationAlert>()
-                .FindAsync(n => n.Status == NotificationStatus.Pending && (n.UserId == id || n.Id.ToString() == id));
+                .FindAsync(n => n.Status == NotificationStatus.Pending && (n.UserId == id || n.Id.ToString() == id)
+                    && (ownerUserId == null || n.UserId == ownerUserId));
             foreach (var n in notificationAlerts)
             {
                 n.Status = NotificationStatus.Resolved;

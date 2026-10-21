@@ -24,6 +24,7 @@ namespace MomOi.API.Services.Alert
         Task<ApiResponse<object>> CreateAlertManualAsync(string userId, CreateAlertRequestDto request);
         Task<ApiResponse<object>> UpdateAlertStatusAsync(string userId, int id, UpdateAlertStatusRequestDto request);
         Task<ApiResponse<object>> DeleteAlertAsync(string userId, int id);
-        Task<ApiResponse<object>> ResolveAlertAsync(string id);
+        /// <param name="ownerUserId">Khác null thì chỉ xử lý cảnh báo thuộc về người dùng này.</param>
+        Task<ApiResponse<object>> ResolveAlertAsync(string id, string? ownerUserId = null);
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MomOi.API.DTOs;
 using MomOi.API.Models.Health;
+using MomOi.API.Models.Identity;
 using MomOi.API.Services.Alert;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -49,7 +50,10 @@ namespace MomOi.API.Controllers
             var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
 
+            // Chỉ Staff/Expert/Admin mới được gửi cảnh báo cho người khác; Mom chỉ tạo cho chính mình.
             var recipientUserId = !string.IsNullOrWhiteSpace(request.TargetUserId) ? request.TargetUserId : currentUserId;
+            if (recipientUserId != currentUserId && !IsCareTeam())
+                return Forbid();
 
             var response = await _alertService.CreateAlertManualAsync(recipientUserId, request);
             return response.Success ? StatusCode(StatusCodes.Status201Created, response) : BadRequest(response);
@@ -91,8 +95,15 @@ namespace MomOi.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         public async Task<IActionResult> ResolveAlert(string id)
         {
-            var response = await _alertService.ResolveAlertAsync(id);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            // Staff/Expert/Admin xử lý được cảnh báo của mọi Mom; Mom chỉ xử lý cảnh báo của chính mình.
+            var response = await _alertService.ResolveAlertAsync(id, IsCareTeam() ? null : userId);
             return response.Success ? Ok(response) : NotFound(response);
         }
+
+        private bool IsCareTeam() =>
+            User.IsInRole(AppRoles.Staff) || User.IsInRole(AppRoles.Expert) || User.IsInRole(AppRoles.Admin);
     }
 }
