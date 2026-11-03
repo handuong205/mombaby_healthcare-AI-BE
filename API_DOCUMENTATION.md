@@ -269,6 +269,45 @@ Tất cả các API của .NET Core đều tuân thủ cấu trúc chuẩn bọc
 #### 5.7 Xóa mốc tăng trưởng (`DELETE /api/baby/{id}/growth/{recordId}`)
 - **Mô tả:** Xóa bản ghi tăng trưởng bị nhập nhầm.
 
+#### 5.8 Tải/thay thế ảnh đại diện bé (`POST /api/baby/{id}/photo`)
+- **Header:** `Authorization: Bearer <accessToken>`.
+- **Content-Type:** `multipart/form-data`.
+- **Form field:** `file` — JPEG, PNG hoặc WebP; tối đa 5 MB. Backend kiểm tra magic bytes, không tin tên file hay Content-Type từ client.
+- **Response:** `ApiResponse<BabyPhotoDto>`.
+  ```json
+  {
+    "success": true,
+    "data": {
+      "hasPhoto": true,
+      "contentType": "image/jpeg",
+      "updatedAt": "2026-10-21T08:00:00Z"
+    },
+    "message": "Tải ảnh đại diện cho bé thành công.",
+    "errorCode": null
+  }
+  ```
+- Nếu bé đã có ảnh, ảnh cũ và metadata sẽ được thay thế.
+
+#### 5.9 Xem ảnh đại diện bé (`GET /api/baby/{id}/photo`)
+- **Header:** `Authorization: Bearer <accessToken>`.
+- **Response thành công:** binary ảnh với `Content-Type` là `image/jpeg`, `image/png` hoặc `image/webp`.
+- Endpoint không công khai và không trả URL có thể đoán được; tài khoản phải sở hữu hồ sơ bé.
+
+#### 5.10 Xóa ảnh đại diện bé (`DELETE /api/baby/{id}/photo`)
+- **Header:** `Authorization: Bearer <accessToken>`.
+- **Response:** `ApiResponse<object>`.
+  ```json
+  {
+    "success": true,
+    "data": null,
+    "message": "Xóa ảnh đại diện của bé thành công.",
+    "errorCode": null
+  }
+  ```
+
+Mã lỗi ảnh: `PHOTO_REQUIRED`, `PHOTO_TOO_LARGE`, `PHOTO_TYPE_NOT_SUPPORTED`, `PHOTO_NOT_FOUND`, `BABY_NOT_FOUND`. Các response hồ sơ bé có thêm trường tùy chọn `hasPhoto`.
+File lưu cục bộ qua `IFileStorage`, thư mục cấu hình bằng `FileStorage:RootPath` (Docker mặc định `/app/uploads`) và volume `baby_uploads`. Ổ đĩa container Railway có thể bị xóa khi deploy; production nên dùng object storage ngoài.
+
 ---
 
 ### 6. Phân hệ Chu kỳ Kinh nguyệt & Hỗ trợ Sinh sản (`/api/fertility`)

@@ -53,6 +53,10 @@ services:
       - NutritionApiUrl=http://nutrition-api:8001
       - RunMigrationsOnStartup=true
       - EnableSwagger=true
+      - FileStorage__RootPath=/app/uploads
+      - FileStorage__MaxPhotoSizeBytes=5242880
+    volumes:
+      - baby_uploads:/app/uploads
     depends_on:
       pgdb:
         condition: service_healthy
@@ -62,3 +66,4 @@ services:
 
 volumes:
   pgdb_data:
+  baby_uploads:
